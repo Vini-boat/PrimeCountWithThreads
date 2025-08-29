@@ -26,9 +26,9 @@ void print_progress_bar(int current, int n) {
     printf("[");
     for (int i = 0; i < width; i++) {
         if (i < progress) {
-            printf("=");
+            printf("■");
         } else {
-            printf("_");
+            printf(" ");
         }
     }
     printf("]\n");
@@ -39,8 +39,10 @@ void *work(void *arg) {
     printf("Hello from thread %d!\n", id);
     while (true) {
         pthread_mutex_lock(&mutex_next);
+
         long start = next;
         next += chunk;
+        
         pthread_mutex_unlock(&mutex_next);
 
         if (start >= n) break;
@@ -55,8 +57,10 @@ void *work(void *arg) {
             }
         }
         pthread_mutex_lock(&mutex_total);
+
         print_progress_bar(end, n);
         total += local_count;
+        
         pthread_mutex_unlock(&mutex_total);
     }
     return NULL;
