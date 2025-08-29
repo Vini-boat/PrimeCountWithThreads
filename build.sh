@@ -1,0 +1,1 @@
+gcc -pthread -o primos primos.c
