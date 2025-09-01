@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <stdbool.h>
+#include <time.h>
 
 long n = 5000000;
 long chunk = 5000;
@@ -77,6 +78,8 @@ int main(int argc, char *argv[]) {
     pthread_mutex_init(&mutex_next, NULL);
     pthread_mutex_init(&mutex_total, NULL);
 
+    clock_t start = clock();
+
     pthread_t thread[k];
     for (int i = 0; i < k; i++) {
         pthread_create(&thread[i], NULL, work, (void *)(long)i);
@@ -85,6 +88,9 @@ int main(int argc, char *argv[]) {
         pthread_join(thread[i], NULL);
     }
 
+    clock_t end = clock();
+    double time_spent = (double)(end - start) / CLOCKS_PER_SEC;
+    printf("Time taken: %.2f seconds\n", time_spent);
     printf("Total primes up to %ld: %ld\n", n, total);
 
     pthread_mutex_destroy(&mutex_next);
