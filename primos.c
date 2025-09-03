@@ -21,16 +21,13 @@ bool is_prime(long num) {
     return true;
 }
 
-
-
 void print_progress_bar(int current, int n, int k) {
-
-    system("clear");
-    int width = 100;
+    int width = 50;
     int progress = (current * width) / n;
+	
+    // Move o cursor para o início da linha
+    printf("\rk=%d [", k);
 
-    printf("k=%d\n",k);
-    printf("[");
     for (int i = 0; i < width; i++) {
         if (i < progress) {
             printf("■");
@@ -38,7 +35,8 @@ void print_progress_bar(int current, int n, int k) {
             printf(" ");
         }
     }
-    printf("]\n");
+    printf("] %d%%", (current * 100) / n);
+    fflush(stdout); // força a atualização imediata
 }
 
 struct WorkArgs {
@@ -116,7 +114,7 @@ struct BenchmarkResult benchmark(int num_threads) {
 }
 
 void print_header(){
-    system("clear");
+    printf("\n");
     printf(" _______________________________________________________\n");
     printf("| k\t| tempo_ms\t| total_primos\t| speedup_vs_k1 |\n");
     printf("|-------|---------------|---------------|---------------|\n");
@@ -151,4 +149,5 @@ int main(int argc, char *argv[]) {
     int k = atoi(argv[1]);
     benchmark(k);
     return 0;
+
 }
