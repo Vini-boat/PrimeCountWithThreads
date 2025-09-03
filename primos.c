@@ -21,10 +21,15 @@ bool is_prime(long num) {
     return true;
 }
 
-void print_progress_bar(int current, int n) {
+
+
+void print_progress_bar(int current, int n, int k) {
+
     system("clear");
     int width = 100;
     int progress = (current * width) / n;
+
+    printf("k=%d\n",k);
     printf("[");
     for (int i = 0; i < width; i++) {
         if (i < progress) {
@@ -36,15 +41,22 @@ void print_progress_bar(int current, int n) {
     printf("]\n");
 }
 
+struct WorkArgs {
+	int id;
+	int k;
+};
+
 void *work(void *arg) {
-    int id = (int)(long)arg;
+
+    struct WorkArgs* args = (struct WorkArgs*)arg;
+    int id = (int)args->id;
     printf("Hello from thread %d!\n", id);
     while (true) {
         pthread_mutex_lock(&mutex_next);
 
         long start = next;
         next += chunk;
-        
+
         pthread_mutex_unlock(&mutex_next);
 
         if (start >= n) break;
@@ -60,9 +72,9 @@ void *work(void *arg) {
         }
         pthread_mutex_lock(&mutex_total);
 
-        print_progress_bar(end, n);
+	    print_progress_bar(end, n,args->k);
         total += local_count;
-        
+
         pthread_mutex_unlock(&mutex_total);
     }
     return NULL;
@@ -86,7 +98,8 @@ struct BenchmarkResult benchmark(int num_threads) {
 
     pthread_t thread[num_threads];
     for (int i = 0; i < num_threads; i++) {
-        pthread_create(&thread[i], NULL, work, (void *)(long)i);
+	    struct WorkArgs args = {i,num_threads};
+        pthread_create(&thread[i], NULL, work, (void *)&args);
     }
     for (int i = 0; i < num_threads; i++) {
         pthread_join(thread[i], NULL);
@@ -94,18 +107,16 @@ struct BenchmarkResult benchmark(int num_threads) {
 
     clock_t end = clock();
     double time_spent = (double)(end - start) / CLOCKS_PER_SEC;
-    printf("Time taken: %.2f seconds\n", time_spent);
-    printf("Total primes up to %ld: %ld\n", n, total);
 
     pthread_mutex_destroy(&mutex_next);
     pthread_mutex_destroy(&mutex_total);
 
     struct BenchmarkResult result = {num_threads, time_spent * 1000, total};
     return result;
-    
 }
 
 void print_header(){
+    system("clear");
     printf(" _______________________________________________________\n");
     printf("| k\t| tempo_ms\t| total_primos\t| speedup_vs_k1 |\n");
     printf("|-------|---------------|---------------|---------------|\n");
@@ -124,7 +135,6 @@ void auto_benchmark(){
         double speedup = result[0].time_spent / result[i].time_spent;
         printf("| %d\t| %.2f\t| %ld\t| %.2f\t\t|\n", result[i].num_threads, result[i].time_spent, result[i].total_primes, speedup);
     }
-
 }
 
 int main(int argc, char *argv[]) {
