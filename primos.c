@@ -92,24 +92,26 @@ struct BenchmarkResult benchmark(int num_threads) {
     pthread_mutex_init(&mutex_next, NULL);
     pthread_mutex_init(&mutex_total, NULL);
 
-    clock_t start = clock();
+    struct timespec start, end;
+    clock_gettime(CLOCK_MONOTONIC, &start);
 
     pthread_t thread[num_threads];
     for (int i = 0; i < num_threads; i++) {
-	    struct WorkArgs args = {i,num_threads};
+		struct WorkArgs args = {i,num_threads};
         pthread_create(&thread[i], NULL, work, (void *)&args);
     }
     for (int i = 0; i < num_threads; i++) {
         pthread_join(thread[i], NULL);
     }
 
-    clock_t end = clock();
-    double time_spent = (double)(end - start) / CLOCKS_PER_SEC;
+    clock_gettime(CLOCK_MONOTONIC, &end);
+    double time_spent = (end.tv_sec - start.tv_sec) * 1000.0;
+    time_spent += (end.tv_nsec - start.tv_nsec) / 1000000.0;
 
     pthread_mutex_destroy(&mutex_next);
     pthread_mutex_destroy(&mutex_total);
 
-    struct BenchmarkResult result = {num_threads, time_spent * 1000, total};
+    struct BenchmarkResult result = {num_threads, time_spent, total};
     return result;
 }
 
@@ -151,3 +153,4 @@ int main(int argc, char *argv[]) {
     return 0;
 
 }
+
