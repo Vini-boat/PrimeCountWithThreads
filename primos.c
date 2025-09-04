@@ -9,7 +9,7 @@
 long N = 5000000;
 long CHUNK = 5000;
 
-int benchmark_k[] = {1,2,4,6,8};
+int benchmark_k[] = {8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8};
 int num_benchmarks = sizeof(benchmark_k) / sizeof(benchmark_k[0]);
 
 // Variáveis globais, serão acessadas via mutex
@@ -87,6 +87,10 @@ void *work(void *arg) {
 
         pthread_mutex_unlock(&mutex_total);
     }
+    // Caso o ultimo thread a terminar não seja o com o ultimo chunk
+    // a barra ficaria em 99%. Por conta disso imprimimos mais uma vez 
+    // a barra em 100% no final de cada thread para ter certeza
+    print_progress_bar(N, N,args->k);
     return NULL;
 }
 
@@ -139,6 +143,10 @@ void print_header(){
     printf("|-------|---------------|---------------|---------------|\n");
 }
 
+void print_footer(){
+    printf(" ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯\n");
+}
+
 void auto_benchmark(){
     struct BenchmarkResult result[num_benchmarks];
 
@@ -151,6 +159,7 @@ void auto_benchmark(){
         double speedup = result[0].time_spent / result[i].time_spent *100;
         printf("| %d\t| %.2f\t| %ld\t| %.2f%%\t|\n", result[i].num_threads, result[i].time_spent, result[i].total_primes, speedup);
     }
+    print_footer();
 }
 
 int main(int argc, char *argv[]) {

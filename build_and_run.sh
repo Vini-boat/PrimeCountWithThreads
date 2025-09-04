@@ -1,2 +1,2 @@
 ./build.sh
-./primos $(nproc)
+./primos -b
