@@ -4,12 +4,12 @@
 #include <stdbool.h>
 #include <string.h>
 #include <time.h>
-
+#include <unistd.h>
 
 long N = 5000000;
 long CHUNK = 5000;
 
-int benchmark_k[] = {8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8};
+int benchmark_k[] = {1,2,4,6,8};
 int num_benchmarks = sizeof(benchmark_k) / sizeof(benchmark_k[0]);
 
 // Variáveis globais, serão acessadas via mutex
@@ -25,6 +25,11 @@ bool is_prime(long num) {
     if (num <= 1) return false;
     if (num == 2) return true;
     if (num % 2 == 0) return false;
+    
+    // i <= sqrt(num)
+    // i*i <= num
+    // i <= num / i
+
     // i <= num / i para checar só até a raiz quadrada de num sem perder a precisão
     // i+=2 para pular os pares maiores que 2
     for (long i = 3; i <= num / i; i += 2) {
@@ -94,15 +99,15 @@ void *work(void *arg) {
     return NULL;
 }
 
-struct BenchmarkResult
+typedef struct
 {
     int num_threads;
     double time_spent;
     long total_primes;
-};
+} BenchmarkResult;
 
 
-struct BenchmarkResult benchmark(int num_threads) {
+BenchmarkResult benchmark(int num_threads) {
     total = 0;
     next = 0;
     pthread_mutex_init(&mutex_next, NULL);
@@ -132,7 +137,7 @@ struct BenchmarkResult benchmark(int num_threads) {
 
     printf("\n"); // para manter as barras de progresso dos outros k na tela
     
-    struct BenchmarkResult result = {num_threads, time_spent, total};
+    BenchmarkResult result = {num_threads, time_spent, total};
     return result;
 }
 
@@ -143,12 +148,16 @@ void print_header(){
     printf("|-------|---------------|---------------|---------------|\n");
 }
 
+void print_result(BenchmarkResult result){
+    printf("| %d\t| %.2f\t| %ld\t| \tN/A\t|\n", result.num_threads, result.time_spent, result.total_primes);
+}
+
 void print_footer(){
     printf(" ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯\n");
 }
 
 void auto_benchmark(){
-    struct BenchmarkResult result[num_benchmarks];
+    BenchmarkResult result[num_benchmarks];
 
     for (int i = 0; i < num_benchmarks; i++) {
         result[i] = benchmark(benchmark_k[i]);
@@ -174,8 +183,19 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
+    if(atoi(argv[1]) == 0){
+        BenchmarkResult result = benchmark(sysconf(_SC_NPROCESSORS_ONLN));
+        print_header();
+        print_result(result);
+        print_footer();
+        return 1;
+    }
+
     int k = atoi(argv[1]);
-    benchmark(k);
+    BenchmarkResult result = benchmark(k);
+    print_header();
+    print_result(result);
+    print_footer();
     return 0;
 
 }
